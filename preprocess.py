@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 OUTDIR = "./processed"
 TRAIN_DIRS = ['training-RiskFactors-Gold-Set1/', ]
-TEST_DIRS  =['testing-RiskFactors-Gold']
+TEST_DIRS = ['testing-RiskFactors-Gold']
 
 # %%
 START_CDATA = "<TEXT><![CDATA["
@@ -48,19 +48,19 @@ def read_xml_file(xml_path, tag_type=None, match_text=True):
 
     _tags = set()
     if tag_type:
-        if isinstance(tag_type,str):
-            for elem in  tag_container.findall(tag_type):
-                _tags.add((tag_type,elem))
+        if isinstance(tag_type, str):
+            for elem in tag_container.findall(tag_type):
+                _tags.add((tag_type, elem))
         else:
             for tag in tag_type:
-                for elem in  tag_container.findall((tag)):
-                    _tags.add((tag_type,elem))
+                for elem in tag_container.findall((tag)):
+                    _tags.add((tag_type, elem))
     else:
         for elem in tag_container.getchildren():
-            _tags.add(("O",elem))
+            _tags.add(("O", elem))
     _labels = [['O'] * len(sentence) for sentence in text]
 
-    for base_label,_tag in _tags:
+    for base_label, _tag in _tags:
         # base_label = _tag.attrib['TYPE']
         start_pos, end_pos, _text = _tag.attrib['start'], _tag.attrib['end'], _tag.attrib['text']
         start_pos, end_pos = int(start_pos)+1, int(end_pos)
@@ -246,7 +246,7 @@ def reprocess_labels(folders, base_path='.', _tag_type='PHI', match_text=True, d
 
 # %%
 final_train_text, final_dev_text = reprocess_labels(
-  TRAIN_DIRS, _tag_type="PHI",
+    TRAIN_DIRS, _tag_type="PHI",
     dev_set_size=0.1, match_text=True
 )
 
