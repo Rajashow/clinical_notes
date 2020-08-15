@@ -17,7 +17,7 @@ from model import EntityModel
 
 
 def process_data(train_path):
-    data = pd.read_csv(train_path,)
+    data = pd.read_csv(train_path,keep_default_na=False)
     data.groupby("filename")["word"].apply(lambda x: " ".join(map(str, x)))
     enc_label = preprocessing.LabelEncoder()
 
@@ -48,13 +48,13 @@ if __name__ == "__main__":
     train_dataset = dataset.EntityDataset(texts=train_sentences, tags=train_tag)
 
     train_data_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.TRAIN_BATCH_SIZE, num_workers=4
+        train_dataset, batch_size=config.TRAIN_BATCH_SIZE,# num_workers=1
     )
 
     valid_dataset = dataset.EntityDataset(texts=test_sentences, tags=test_tag)
 
     valid_data_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=1
+        valid_dataset, batch_size=config.VALID_BATCH_SIZE, #num_workers=1
     )
 
     device = torch.device("cuda")

@@ -20,16 +20,13 @@ class EntityDataset:
         target_tag = []
 
         for i, s in enumerate(text):
-            inputs = config.TOKENIZER.encode(
-                s,
-                add_special_tokens=False
-            )
+            inputs = config.TOKENIZER.encode(s, add_special_tokens=False)
             input_len = len(inputs)
             ids.extend(inputs)
             target_tag.extend([tags[i]] * input_len)
 
-        ids = ids[:config.MAX_LEN - 2]
-        target_tag = target_tag[:config.MAX_LEN - 2]
+        ids = ids[: config.MAX_LEN - 2]
+        target_tag = target_tag[: config.MAX_LEN - 2]
 
         ids = [101] + ids + [102]
         target_tag = [0] + target_tag + [0]
