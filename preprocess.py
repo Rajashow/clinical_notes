@@ -22,7 +22,7 @@ TAGS = set(
         "CAD",
         "PHI",
         "FAMILY_HIST",
-        "HYPERLIPIDEMIA"
+        "HYPERLIPIDEMIA",
     ]
 )
 TEXT_TAG = "TEXT"
@@ -32,8 +32,8 @@ NUMBER_WORD_PER_SENT = config.MAX_LEN // 1.5
 
 
 def maxDisjointIntervals(itr: iter):
+    return_lst = []
     if itr:
-        return_lst = []
         # Lambda function to sort the list
         # elements by second element of pairs
         itr.sort(key=lambda x: x[1])
@@ -54,9 +54,7 @@ def maxDisjointIntervals(itr: iter):
             if l1 > r1:
                 return_lst.append(elem)
                 r1 = r2
-        return return_lst
-    else:
-        return [[-1, -1, "O", ""]]
+    return return_lst
 
 
 def has_valid_label_idx(tag):
@@ -119,39 +117,80 @@ def process_xml(i, file):
         for tag in tag_containers[0]
         if has_valid_label_idx(tag) and not is_doc_lvl_tag(tag)
     ]
-
-    disjoint_interval_itr = iter(maxDisjointIntervals(ext_tags))
-    char_idx = 0
-    hit = False
+    disjoint_interval_idx = 0
     words = []
     labels = []
-    low, high, tag, _ = next(disjoint_interval_itr)
-    split_txt = [word for word in re.split("(\W)+", clinical_note,) if word]
+    hit = False
+    char_idx = 0
     sentence_words = []
     sentence_labels = []
-    for i, word in enumerate(split_txt):
-        if not word.isspace():
-            label = "O"
-            if low <= char_idx <= high:
-                hit = True
-                label = tag
-            else:
-                if hit:
-                    hit = False
-                    try:
-                        low, high, tag, _ = next(disjoint_interval_itr)
-                    except Exception:
-                        pass
-            sentence_labels.append(label)
-            sentence_words.append(word)
-            if not hit and is_end_of_sentence(split_txt, i, len(sentence_words)):
-                words.append(sentence_words)
-                labels.append(sentence_labels)
-                sentence_labels = []
-                sentence_words = []
-        char_idx += len(word)
+    disjoint_interval_tags = maxDisjointIntervals(ext_tags)
+    split_txt = [word for word in re.split("(\W)", clinical_note,) if word]
+    try:
 
+        low, high, tag, _txt = disjoint_interval_tags[disjoint_interval_idx]
+
+    except IndexError:
+        for i, word in enumerate(split_txt):
+            if not word.isspace():
+                sentence_words.append(word)
+                sentence_labels.append("O")
+                if is_end_of_sentence(split_txt, i, len(sentence_words)):
+                    words.append(sentence_words)
+                    labels.append(sentence_labels)
+                    sentence_labels = []
+                    sentence_words = []
+            char_idx += len(word)
+    else:
+
+        for i, word in enumerate(split_txt):
+            if not word.isspace():
+                label = "O"
+                if low <= char_idx <= high:
+                    hit = True
+                    label = tag
+                else:
+                    if hit:
+                        hit = False
+                        try:
+                            disjoint_interval_idx += 1
+                            low, high, tag, _txt = disjoint_interval_tags[
+                                disjoint_interval_idx
+                            ]
+                        except IndexError:
+                            pass
+                    try:
+                        while high < char_idx:
+                            disjoint_interval_idx += 1
+                            low, high, tag, _txt = disjoint_interval_tags[
+                                disjoint_interval_idx
+                            ]
+                    except IndexError:
+                        pass
+
+                sentence_labels.append(label)
+                sentence_words.append(word)
+                if not hit and is_end_of_sentence(split_txt, i, len(sentence_words)):
+                    words.append(sentence_words)
+                    labels.append(sentence_labels)
+                    sentence_labels = []
+                    sentence_words = []
+            assert clinical_note[char_idx : char_idx + len(word)] == word
+            char_idx += len(word)
+
+    if sentence_labels and sentence_words:
+        words.append(sentence_words)
+        labels.append(sentence_labels)
     assert len(words) == len(labels), "words and labels count don't match"
+    try:
+
+        assert (
+            len(disjoint_interval_tags) <= (disjoint_interval_idx+1)
+        ), "didn't use all the tags"
+
+        pass
+    except StopIteration:
+        pass
     return words, labels
 
 
