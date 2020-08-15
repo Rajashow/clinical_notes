@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer
 
-MAX_LEN = 128
+MAX_LEN = 4294
 TRAIN_BATCH_SIZE = 32
 VALID_BATCH_SIZE = 8
 EPOCHS = 10
