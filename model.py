@@ -13,6 +13,15 @@ def loss_fn(output, target, mask, num_labels):
     )
     loss = lfn(active_logits, active_labels)
     return loss
+def loss_f1(output, target, mask, num_labels):
+    lfn = nn.CrossEntropyLoss()
+    active_loss = mask.view(-1) == 1
+    active_logits = output.view(-1, num_labels)
+    active_labels = torch.where(
+        active_loss, target.view(-1), torch.tensor(lfn.ignore_index).type_as(target)
+    )
+    loss = lfn(active_logits, active_labels)
+    return loss
 
 
 class EntityModel(nn.Module):

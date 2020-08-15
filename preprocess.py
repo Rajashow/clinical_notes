@@ -15,7 +15,7 @@ TRAIN_DIRS = [
 ]
 TEST_DIRS = ["testing-RiskFactors-Gold"]
 # ['MEDICATION', 'OBSEE', 'SMOKER', 'HYPERTENSION', 'PHI', 'FAMILY_HIST']
-TAGS = set(("SMOKER",))
+TAGS = set(["MEDICATION", "OBSEE", "SMOKER", "HYPERTENSION", "PHI", "FAMILY_HIST"])
 TEXT_TAG = "TEXT"
 TAGS_TAG = "TAGS"
 START_CDATA = "<TEXT><![CDATA["
@@ -65,20 +65,18 @@ def valid_label(tag):
 
 
 def get_tag_data(tag):
-    if tag.tag != "SMOKER":
-        return (
-            int(tag.attrib["start"]),
-            int(tag.attrib["end"]),
-            tag.tag,
-            tag.attrib["text"],
-        )
-    else:
-        return (
-            int(tag.attrib["start"]),
-            int(tag.attrib["end"]),
-            f"{tag.tag}-{tag.attrib['status']}",
-            tag.attrib["text"],
-        )
+    modifer = tag.attrib.get(
+        "status", tag.attrib.get("TYPE", tag.attrib.get("indicator", ""))
+    ).replace(" ", "-")
+    if modifer:
+        modifer = f"-{modifer}"
+    tag_name = f"{tag.tag}{modifer}"
+    return (
+        int(tag.attrib["start"]),
+        int(tag.attrib["end"]),
+        tag_name,
+        tag.attrib["text"],
+    )
 
 
 def process_xml(i, file):
@@ -128,7 +126,7 @@ def process_all_xml(folder=None, outdir="", out_modifer=""):
             max_len = max(max_len, len(words))
             csv_file.writerows(
                 [
-                    (os.path.basename(file),i//100, i%100, word, label)
+                    (os.path.basename(file), i // 100, i % 100, word, label)
                     for i, (word, label) in enumerate(zip(words, labels))
                 ]
             )
