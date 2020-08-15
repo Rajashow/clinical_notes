@@ -1,7 +1,6 @@
 # %%
 import csv
 from glob import glob
-import pandas as pd
 import os
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -13,7 +12,19 @@ import config
 OUTDIR = "processed/ner"
 TRAIN_DIR = "new_bert/train"
 TEST_DIR = "new_bert/test"
-TAGS = set(["MEDICATION", "OBSEE", "SMOKER", "HYPERTENSION", "PHI", "FAMILY_HIST"])
+TAGS = set(
+    [
+        "MEDICATION",
+        "DIABETES",
+        "OBESE",
+        "SMOKER",
+        "HYPERTENSION",
+        "CAD",
+        "PHI",
+        "FAMILY_HIST",
+        "HYPERLIPIDEMIA"
+    ]
+)
 TEXT_TAG = "TEXT"
 TAGS_TAG = "TAGS"
 NUMBER_WORD_PER_SENT = config.MAX_LEN // 1.5
@@ -77,7 +88,28 @@ def get_tag_data(tag):
     )
 
 
+def is_end_of_sentence(split_txt, idx, curr_sentence_size):
+    # has a period and follows with a space or end of line is sentence
+    return (
+        (
+            ((not (idx + 1 < len(split_txt))) or split_txt[idx + 1].isspace())
+            and "." in split_txt[idx]
+        )
+        or (
+            split_txt[idx + 1].isspace()
+            and (curr_sentence_size >= int(NUMBER_WORD_PER_SENT * 0.9))
+            and split_txt[idx:].index("\n") >= int(NUMBER_WORD_PER_SENT * 0.1)
+        )
+        or (
+            (not split_txt[idx].isalnum())
+            and split_txt[idx:].index(split_txt[idx])
+            >= (int(NUMBER_WORD_PER_SENT * 0.9) - curr_sentence_size)
+        )
+    )
+
+
 def process_xml(i, file):
+
     xml_parsed = ET.parse(file)
 
     clinical_note = xml_parsed.find(TEXT_TAG).text
@@ -88,29 +120,37 @@ def process_xml(i, file):
         if has_valid_label_idx(tag) and not is_doc_lvl_tag(tag)
     ]
 
-    interval_sub_set_ = maxDisjointIntervals(ext_tags)
-    interval_idx = 0
-    idx = 0
+    disjoint_interval_itr = iter(maxDisjointIntervals(ext_tags))
+    char_idx = 0
     hit = False
     words = []
     labels = []
-    low, high, tag, txt = interval_sub_set_[interval_idx]
-
-    for word in re.split("(\W)", clinical_note):
-        if len(word) and not word.isspace():
-            if low <= idx <= high and word in txt:
-                labels.append(tag)
+    low, high, tag, _ = next(disjoint_interval_itr)
+    split_txt = [word for word in re.split("(\W)+", clinical_note,) if word]
+    sentence_words = []
+    sentence_labels = []
+    for i, word in enumerate(split_txt):
+        if not word.isspace():
+            label = "O"
+            if low <= char_idx <= high:
                 hit = True
+                label = tag
             else:
-                labels.append("O")
-                # TODO: CLEAN THIS
                 if hit:
                     hit = False
-                    interval_idx += 1
-                    if interval_idx < len(interval_sub_set_):
-                        low, high, tag, txt = interval_sub_set_[interval_idx]
-            words.append(word)
-        idx += len(word)
+                    try:
+                        low, high, tag, _ = next(disjoint_interval_itr)
+                    except Exception:
+                        pass
+            sentence_labels.append(label)
+            sentence_words.append(word)
+            if not hit and is_end_of_sentence(split_txt, i, len(sentence_words)):
+                words.append(sentence_words)
+                labels.append(sentence_labels)
+                sentence_labels = []
+                sentence_words = []
+        char_idx += len(word)
+
     assert len(words) == len(labels), "words and labels count don't match"
     return words, labels
 
@@ -125,19 +165,15 @@ def process_all_xml(folder=None, outdir="", out_modifer=""):
         for i, file in tqdm(
             enumerate(xmls), total=len(xmls), desc=f"Processing files from {folder}: "
         ):
-            words, labels = process_xml(i, file)
+            lst_words, lst_labels = process_xml(i, file)
             csv_file.writerows(
                 [
-                    (
-                        os.path.basename(file),
-                        i // NUMBER_WORD_PER_SENT,
-                        i % NUMBER_WORD_PER_SENT,
-                        word,
-                        label,
-                    )
-                    for i, (word, label) in enumerate(zip(words, labels))
+                    (os.path.basename(file), i, j, word, label,)
+                    for i, (words, labels) in enumerate(zip(lst_words, lst_labels))
+                    for j, (word, label) in enumerate(zip(words, labels))
                 ]
             )
+    pass
 
 
 # %%
