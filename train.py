@@ -1,10 +1,8 @@
-import pandas as pd
 import numpy as np
 
 import joblib
 import torch
 
-from sklearn import preprocessing
 from sklearn import model_selection
 
 from transformers import AdamW
@@ -14,19 +12,7 @@ import config
 import dataset
 import engine
 from model import EntityModel
-
-
-def process_data(train_path):
-    GROUPBY = ["filename", "sentence"]
-    data = pd.read_csv(config.TRAINING_FILE, keep_default_na=False)
-    data.groupby("filename")["word"].apply(lambda x: " ".join(map(str, x)))
-    enc_label = preprocessing.LabelEncoder()
-
-    data.loc[:, "label"] = enc_label.fit_transform(data["label"])
-    sentences = data.groupby(GROUPBY)["word"].apply(list).values
-    tag = data.groupby(GROUPBY)["label"].apply(list).values
-    return (sentences, tag, enc_label)
-
+from utils import process_data
 
 if __name__ == "__main__":
     (sentences, tag, enc_tag) = process_data(config.TRAINING_FILE)
@@ -48,13 +34,13 @@ if __name__ == "__main__":
     train_dataset = dataset.EntityDataset(texts=train_sentences, tags=train_tag)
 
     train_data_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.TRAIN_BATCH_SIZE,  # num_workers=1
+        train_dataset, batch_size=config.TRAIN_BATCH_SIZE, num_workers=4
     )
 
     valid_dataset = dataset.EntityDataset(texts=test_sentences, tags=test_tag)
 
     valid_data_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=config.VALID_BATCH_SIZE,  # num_workers=1
+        valid_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=1
     )
 
     device = torch.device("cuda")

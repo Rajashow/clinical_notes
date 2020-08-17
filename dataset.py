@@ -3,11 +3,12 @@ import torch
 
 
 class EntityDataset:
-    def __init__(self, texts, tags):
+    def __init__(self, texts, tags, verbose=False):
         # texts: [["hi", ",", "my", "name", "is", "bob"], ["hello".....]]
         # tags: [[1 2 3 4 1 5], [....].....]]
         self.texts = texts
         self.tags = tags
+        self._verbose = verbose
 
     def __len__(self):
         return len(self.texts)
@@ -26,6 +27,8 @@ class EntityDataset:
             target_tag.extend([tags[i]] * input_len)
 
         ids = ids[: config.MAX_LEN - 2]
+        if self._verbose and len(ids) > config.MAX_LEN:
+            print(len(ids))
         target_tag = target_tag[: config.MAX_LEN - 2]
 
         ids = [101] + ids + [102]

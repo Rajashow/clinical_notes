@@ -146,7 +146,7 @@ def process_xml(i, file):
         for i, word in enumerate(split_txt):
             if not word.isspace():
                 label = "O"
-                if low <= char_idx <= high:
+                if low <= char_idx <= high and word in _txt:
                     hit = True
                     label = tag
                 else:
@@ -184,8 +184,8 @@ def process_xml(i, file):
     assert len(words) == len(labels), "words and labels count don't match"
     try:
 
-        assert (
-            len(disjoint_interval_tags) <= (disjoint_interval_idx+1)
+        assert len(disjoint_interval_tags) <= (
+            disjoint_interval_idx + 1
         ), "didn't use all the tags"
 
         pass
