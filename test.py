@@ -1,4 +1,3 @@
-from train import sentences
 import numpy as np
 
 import joblib
@@ -24,15 +23,16 @@ if __name__ == "__main__":
 
     device = torch.device("cuda")
     model = EntityModel(num_tag=num_tag,)
-    model.load_state_dict(torch.load(config.MODEL_PATH))
+    # model.load_state_dict(torch.load(config.MODEL_PATH))
     model.to(device)
     final_loss = 0
     model.eval()
     for data in tqdm(data_loader, total=len(data_loader)):
         for k, v in data.items():
             data[k] = v.to(device)
-        tag, _loss = model(**data)
-        y_pred = tag.argmax(2).cpu().numpy().reshape(-1)
-        y_true = data["target_tag"]
-        final_loss += f1_score(y_true, y_pred,)
+        tag, _ = model(**data)
+        y_pred = torch.argmax(tag, dim=-1)
+        print(y_pred.shape)
+        print(data["target_tag"].shape)
+        final_loss += f1_score(data["target_tag"].cpu().numpy(), y_pred.cpu().numpy())
     print(f"f1 score : { final_loss / len(data_loader):.5f}")

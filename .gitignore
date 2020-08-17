@@ -1,3 +1,4 @@
 new_bert/test/*.xml
 new_bert/train/*.xml
 .vscode/
+__pycache__/

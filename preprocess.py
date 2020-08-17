@@ -58,15 +58,60 @@ def maxDisjointIntervals(itr: iter):
 
 
 def has_valid_label_idx(tag):
+    """
+    has_valid_label_idx
+
+    tag has a valid positive idx
+
+    Parameters
+    ----------
+    tag : xml.element
+        tag
+
+    Returns
+    -------
+    bool
+        start and end idx are not negative
+    """
     return tag.tag in TAGS and tag.attrib["start"] != "-1" and tag.attrib["end"] != "-1"
 
 
 def is_doc_lvl_tag(tag):
+    """
+    is_doc_lvl_tag is a doc lvl tag
+
+
+    Parameters
+    ----------
+    tag : xml.element
+        tag
+
+    Returns
+    -------
+    bool
+        tag has a text asscoted to it and the txt explicitly implies the tag
+    """
     DOC_LVL_MODIFER = set(("not present", "unknown"))
     return get_modifer(tag, leading_hyphen=False) in DOC_LVL_MODIFER
 
 
 def get_modifer(tag, leading_hyphen=True):
+    """
+    get_modifer get the tag's modifer
+
+
+    Parameters
+    ----------
+    tag : xml.element
+        tag to processs
+    leading_hyphen : bool, optional
+        add a leading hyphen, by default True
+
+    Returns
+    -------
+    str
+        given a tag get it's status/Type/indicator as str
+    """
     modifer = tag.attrib.get(
         "status", tag.attrib.get("TYPE", tag.attrib.get("indicator", ""))
     ).replace(" ", "-")
@@ -76,7 +121,21 @@ def get_modifer(tag, leading_hyphen=True):
 
 
 def get_tag_data(tag):
+    """
+    get_tag_data
 
+    get the tags start, end, name and txt
+
+    Parameters
+    ----------
+    tag : xml.element
+        tag to processs
+
+    Returns
+    -------
+    tuple
+        int(start_idx),int(end_idx),str(tag's name),str(text inside of tag)
+    """
     tag_name = f"{tag.tag}{get_modifer(tag)}"
     return (
         int(tag.attrib["start"]),
@@ -107,16 +166,36 @@ def is_end_of_sentence(split_txt, idx, curr_sentence_size):
 
 
 def process_xml(i, file):
+    """
+    process_xml process a xml file to words and labels
+
+
+
+    Parameters
+    ----------
+    i : int
+        file's index
+    file : file
+        file to process
+
+    Returns
+    -------
+    tuple
+        (words,labels)
+    """
 
     xml_parsed = ET.parse(file)
 
+    # get text and tags
     clinical_note = xml_parsed.find(TEXT_TAG).text
     tag_containers = xml_parsed.findall(TAGS_TAG)
+    # get valid tags only
     ext_tags = [
         get_tag_data(tag)
         for tag in tag_containers[0]
         if has_valid_label_idx(tag) and not is_doc_lvl_tag(tag)
     ]
+    # try to create words and labels mappings
     disjoint_interval_idx = 0
     words = []
     labels = []
@@ -124,13 +203,15 @@ def process_xml(i, file):
     char_idx = 0
     sentence_words = []
     sentence_labels = []
+    # get unique tags while being sorted
     disjoint_interval_tags = maxDisjointIntervals(ext_tags)
+    # spilt the txt but keep the whitespaces
     split_txt = [word for word in re.split("(\W)", clinical_note,) if word]
     try:
 
         low, high, tag, _txt = disjoint_interval_tags[disjoint_interval_idx]
 
-    except IndexError:
+    except IndexError:  # if no tags are found fill all words with 'O'
         for i, word in enumerate(split_txt):
             if not word.isspace():
                 sentence_words.append(word)
@@ -142,7 +223,7 @@ def process_xml(i, file):
                     sentence_words = []
             char_idx += len(word)
     else:
-
+        # map all words to labels
         for i, word in enumerate(split_txt):
             if not word.isspace():
                 label = "O"
@@ -160,6 +241,7 @@ def process_xml(i, file):
                         except IndexError:
                             pass
                     try:
+                        # if a tag is already used skip it
                         while high < char_idx:
                             disjoint_interval_idx += 1
                             low, high, tag, _txt = disjoint_interval_tags[
@@ -170,31 +252,42 @@ def process_xml(i, file):
 
                 sentence_labels.append(label)
                 sentence_words.append(word)
+                # if a words can be treated as the end of sentence create a new sentence
                 if not hit and is_end_of_sentence(split_txt, i, len(sentence_words)):
                     words.append(sentence_words)
                     labels.append(sentence_labels)
                     sentence_labels = []
                     sentence_words = []
+
             assert clinical_note[char_idx : char_idx + len(word)] == word
             char_idx += len(word)
-
+    # append the last lables and sentences
     if sentence_labels and sentence_words:
         words.append(sentence_words)
         labels.append(sentence_labels)
     assert len(words) == len(labels), "words and labels count don't match"
-    try:
+    assert len(disjoint_interval_tags) <= (
+        disjoint_interval_idx + 1
+    ), "didn't use all the tags"
 
-        assert len(disjoint_interval_tags) <= (
-            disjoint_interval_idx + 1
-        ), "didn't use all the tags"
-
-        pass
-    except StopIteration:
-        pass
     return words, labels
 
 
 def process_all_xml(folder=None, outdir="", out_modifer=""):
+    """
+    process_all_xml prcoess all xml 2 csv
+
+    for a folder get all xmls and place them in a csv in the outdir with the out_modifer
+
+    Parameters
+    ----------
+    folder : str/path, optional
+        where to get xmls, by default None
+    outdir : str, optional
+        outdir, by default ""
+    out_modifer : str, optional
+        modifer to add the csv file, by default ""
+    """
     xmls = glob(os.path.join(folder, "*.xml"))
     if not os.path.exists(outdir):
         os.makedirs(outdir)
