@@ -9,6 +9,7 @@ from model import EntityModel
 from tqdm import tqdm
 from utils import process_data
 from sklearn.metrics import f1_score
+from sklearn.preprocessing import MultiLabelBinarizer
 
 if __name__ == "__main__":
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda")
     model = EntityModel(num_tag=num_tag,)
-    # model.load_state_dict(torch.load(config.MODEL_PATH))
+    model.load_state_dict(torch.load(config.MODEL_PATH))
     model.to(device)
     final_loss = 0
     model.eval()
@@ -31,8 +32,12 @@ if __name__ == "__main__":
         for k, v in data.items():
             data[k] = v.to(device)
         tag, _ = model(**data)
-        y_pred = torch.argmax(tag, dim=-1)
-        print(y_pred.shape)
-        print(data["target_tag"].shape)
-        final_loss += f1_score(data["target_tag"].cpu().numpy(), y_pred.cpu().numpy())
-    print(f"f1 score : { final_loss / len(data_loader):.5f}")
+
+        y_pred = torch.argmax(tag, dim=-1).cpu().numpy()
+        y_true = data["target_tag"].cpu().numpy()
+        m = MultiLabelBinarizer().fit(y_true)
+
+        final_loss += f1_score(
+            m.transform(y_true), m.transform(y_pred), average="macro"
+        )
+    print(f"f1 score : { final_loss / len(data_loader):.5%}")
