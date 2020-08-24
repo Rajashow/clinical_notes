@@ -29,7 +29,11 @@ from spacy import displacy
 
 # %%
 TEXT_TAG = "TEXT"
-
+MODELS = {
+    "nlp_bc": (en_ner_bc5cdr_md.load(), "CHEMICAL"),
+    "nlp_bi": (en_core_med7_lg.load(), "DRUG"),
+    "med7": (en_ner_bionlp13cg_md.load(), "SIMPLE_CHEMICAL"),
+}
 # %%
 def show_medical_abbreviation(model, document):
     """
@@ -87,38 +91,33 @@ def extract_drug_info(i: int, file: str, vote: int = 2, med7_only: bool = True):
     # get text and tags
     clinical_note = xml_parsed.find(TEXT_TAG).text
     if vote:
-        nlp_bc = en_ner_bc5cdr_md.load()
-        nlp_bi = en_ner_bionlp13cg_md.load()
-        med7 = en_core_med7_lg.load()
+
         drug_counter = Counter()
-        for nlp, tag in [
-            (nlp_bc, "CHEMICAL"),
-            (med7, "DRUG"),
-            (nlp_bi, "SIMPLE_CHEMICAL"),
-        ]:
+        for nlp, drug_tag in MODELS.items():
             entries = set()
             if not nlp.has_pipe("Negex"):
                 negex = Negex(nlp, language="en_clinical_sensitive")
                 nlp.add_pipe(negex, last=True)
             doc = nlp(clinical_note)
             for e in doc.ents:
-                if e.ent_type_ == tag:
+                if e.ent_type_ == drug_tag:
                     entries.add(f"{e.text}&{e._.negex}")
             for entry in entries:
                 drug_counter[entry] += 1
 
         return [drug for drug, number in drug_counter.items() if number >= vote]
     elif med7_only:
-        med7 = en_core_med7_lg.load()
-        negex = Negex(med7, language="en_clinical_sensitive")
-        med7.add_pipe(negex, last=True)
+        med7, drug_tag = MODELS.get("med7")
+        if not med7.has_pipe("Negex"):
+            negex = Negex(med7, language="en_clinical_sensitive")
+            med7.add_pipe(negex, last=True)
         return list(
             set(
                 (
                     # e._.negex
                     f"{e.text}&{True}"
                     for e in med7(clinical_note)
-                    if e.ent_type_ == "DRUG" and re.sub(r"[^\w\s]", "", e.text)
+                    if e.ent_type_ == drug_tag and re.sub(r"[^\w\s]", "", e.text)
                 )
             )
         )
@@ -147,10 +146,9 @@ def process_all_xml(
     out_modifer : str, optional
         modifer to add the csv file, by default ""
     """
-    xmls = glob(os.path.join(folder, "*.xml"))[:5]
+    xmls = glob(os.path.join(folder, "*.xml"))
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    label_set = set()
     with open(os.path.join(outdir, f"i2b2{out_modifer}.csv"), "w") as file:
         csv_file = csv.writer(file,)
 
@@ -175,7 +173,6 @@ def process_all_xml(
         )
 
         csv_file.writerows([])
-    print(label_set)
     pass
 
 
@@ -183,4 +180,4 @@ def process_all_xml(
 OUTDIR = "processed/spacy"
 TRAIN_DIR = "new_bert/train"
 
-process_all_xml(TRAIN_DIR, outdir=OUTDIR, out_modifer="_train")
+process_all_xml(TRAIN_DIR, outdir=OUTDIR, out_modifer="_drugs_train")
