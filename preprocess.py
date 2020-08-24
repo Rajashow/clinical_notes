@@ -3,10 +3,10 @@ import csv
 from glob import glob
 import os
 import xml.etree.ElementTree as ET
-import numpy as np
 import re
 from tqdm import tqdm
 import config
+from collections import deque
 
 # %%
 OUTDIR = "processed/ner"
@@ -27,7 +27,7 @@ TAGS = set(
 )
 TEXT_TAG = "TEXT"
 TAGS_TAG = "TAGS"
-NUMBER_WORD_PER_SENT = config.MAX_LEN // 1.5
+NUMBER_WORD_PER_SENT = config.MAX_LEN // config.LEN_TO_SENTENCE_LOAD_FACTOR
 # %%
 
 
@@ -291,6 +291,7 @@ def process_all_xml(folder=None, outdir="", out_modifer=""):
     xmls = glob(os.path.join(folder, "*.xml"))
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+    label_set = set()
     with open(os.path.join(outdir, f"i2b2{out_modifer}.csv"), "w") as file:
         csv_file = csv.writer(file,)
         csv_file.writerow(["filename", "sentence", "number", "word", "label"])
@@ -298,6 +299,7 @@ def process_all_xml(folder=None, outdir="", out_modifer=""):
             enumerate(xmls), total=len(xmls), desc=f"Processing files from {folder}: "
         ):
             lst_words, lst_labels = process_xml(i, file)
+            deque(map(lambda lbls: label_set.update(lbls), lst_labels))
             csv_file.writerows(
                 [
                     (os.path.basename(file), i, j, word, label,)
@@ -305,6 +307,7 @@ def process_all_xml(folder=None, outdir="", out_modifer=""):
                     for j, (word, label) in enumerate(zip(words, labels))
                 ]
             )
+    print(label_set)
     pass
 
 

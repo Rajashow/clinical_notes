@@ -46,7 +46,6 @@ if __name__ == "__main__":
         final_loss += f1_score(
             m.transform(y_true), m.transform(y_pred), average="macro"
         )
-
     print(f"f1 score : { final_loss / len(data_loader):.5%}")
     y_pred_list = [a.squeeze().tolist() for a in y_pred_list]
     confusion_matrix_df = pd.DataFrame(confusion_matrix(tags, y_pred_list)).rename(

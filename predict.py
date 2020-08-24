@@ -16,20 +16,17 @@ if __name__ == "__main__":
 
     num_tag = len(list(enc_tag.classes_))
 
-    sentence = """insert entence here """
+    sentence = input("Give me an sentence to try out:")
     tokenized_sentence = config.TOKENIZER.encode(sentence)
 
     sentence = sentence.split()
     print(sentence)
     print(tokenized_sentence)
 
-    test_dataset = dataset.EntityDataset(
-        texts=[sentence],
-        tags=[[0] * len(sentence)]
-    )
+    test_dataset = dataset.EntityDataset(texts=[sentence], tags=[[0] * len(sentence)])
 
     device = torch.device("cuda")
-    model = EntityModel(num_tag=num_tag, )
+    model = EntityModel(num_tag=num_tag,)
     model.load_state_dict(torch.load(config.MODEL_PATH))
     model.to(device)
 
@@ -37,10 +34,10 @@ if __name__ == "__main__":
         data = test_dataset[0]
         for k, v in data.items():
             data[k] = v.to(device).unsqueeze(0)
-        tag,  _ = model(**data)
+        tag, _ = model(**data)
 
         print(
-            enc_tag.inverse_transform(
-                tag.argmax(2).cpu().numpy().reshape(-1)
-            )[:len(tokenized_sentence)]
+            enc_tag.inverse_transform(tag.argmax(2).cpu().numpy().reshape(-1))[
+                : len(tokenized_sentence)
+            ]
         )

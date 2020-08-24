@@ -13,10 +13,31 @@ import dataset
 import engine
 from model import EntityModel
 from utils import process_data
+import argparse
+
+
+def get_args():
+
+    parser = argparse.ArgumentParser("Train a bert model on data")
+    parser.add_argument(
+        "--SSWST",
+        help="Skip sentences with the same tags/labels",
+        action="store_true",
+        default=False,
+        required=False,
+    )
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        print(f"defined but unknown args {unknown}")
+    return args
+
 
 if __name__ == "__main__":
+    args = get_args()
     # loading data
-    (sentences, tag, enc_tag) = process_data(config.TRAINING_FILE)
+    (sentences, tag, enc_tag) = process_data(
+        config.TRAINING_FILE, remove_idetincal_chained_values=args.SSWST
+    )
 
     # saving encoder
     meta_data = {
