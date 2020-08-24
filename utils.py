@@ -35,6 +35,6 @@ def process_data(csv_path, enc_label=None, remove_idetincal_chained_values=False
             lambda group: group if len(group["label"].unique()) != 1 else None
         ).dropna()
 
-    sentences = data["word"].apply(list).values
-    tag = data["label"].apply(list).values
+    sentences = data["word"].values
+    tag = data["label"].values
     return (sentences, tag, enc_label)
