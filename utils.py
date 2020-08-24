@@ -43,3 +43,4 @@ def process_data(csv_path, enc_label=None, remove_idetincal_chained_values=False
 
     sentences = data["word"].apply(list).values
     tag = data["label"].apply(list).values
+    return sentences, tag, enc_label
