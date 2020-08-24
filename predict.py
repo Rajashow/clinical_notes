@@ -38,6 +38,6 @@ if __name__ == "__main__":
 
         print(
             enc_tag.inverse_transform(tag.argmax(2).cpu().numpy().reshape(-1))[
-                : len(tokenized_sentence)
+                1: len(tokenized_sentence)-1
             ]
         )

@@ -28,8 +28,8 @@ def process_data(csv_path, enc_label=None, remove_idetincal_chained_values=False
     data = pd.read_csv(csv_path, keep_default_na=False)
     if not enc_label:
         enc_label = preprocessing.LabelEncoder()
-
-    data.loc[:, "label"] = enc_label.fit_transform(data["label"])
+        enc_label.fit(("ANY_SEQ__", *data["label"].unique()))
+    data["label"] = enc_label.transform(data["label"])
     data = data.groupby(GROUPBY)
     if remove_idetincal_chained_values:
         data = (

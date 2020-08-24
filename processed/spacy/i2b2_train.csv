@@ -1,0 +1,6 @@
+filename,durgs1,durgs2,durgs3,durgs4,durgs5,durgs6,durgs7,durgs8,durgs9,durgs10,durgs11,durgs12,durgs13,durgs14,durgs15,durgs16,durgs17
+"('new_bert/train\\220-01.xml', 'ACETYLSALICYLIC&True', 'LIPITOR&True', 'CECLOR&True', 'ACID&True', 'PLAVIX&True', 'ATENOLOL&True', 'ZESTRIL&True', 'NORVASC&True', 'NITROGLYCERIN&True', 'ACEI&True', 'HYDROCHLOROTHIAZIDE&True', 'ASA&True', 'HCTZ&True', 'Hot&True', 'LISINOPRIL&True', 'flashes&True', 'CEFACLOR&True')",
+"('new_bert/train\\221-01.xml', 'B&True', 'blockade&True', 'Inderal&True', 'Globulin&True', 'Lipitor&True', 'ARB&True', 'Prilosec&True', 'Atenolol&True', 'statin&True', 'ASA&True', 'Nexium&True', 'ns&True', 'NTG&True')"
+"('new_bert/train\\221-02.xml', 'dyazide&True', 'Valium&True', 'Lipitor&True', 'Advair&True', 'Prilosec&True', 'Gaviscon&True', 'Alupent&True', 'Atenolol&True', 'Cozaar&True', 'valium&True', 'inhalants&True', 'cipro&True')"
+"('new_bert/train\\221-03.xml', 'nitroglycerine&True')"
+"('new_bert/train\\221-04.xml', 'nitro&True', 'ASA&True')"
