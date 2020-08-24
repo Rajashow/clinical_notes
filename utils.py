@@ -38,7 +38,7 @@ def process_data(csv_path, enc_label=None, remove_idetincal_chained_values=False
             )
             .dropna()
             .reset_index(drop=True)
-            .group_by(GROUPBY)
+            .groupby(GROUPBY)
         )
 
     sentences = data["word"].apply(list).values
