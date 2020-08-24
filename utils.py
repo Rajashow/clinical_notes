@@ -25,7 +25,7 @@ def process_data(csv_path, enc_label=None, remove_idetincal_chained_values=False
     """
 
     GROUPBY = ["filename", "sentence"]
-    data = pd.read_csv(config.TRAINING_FILE, keep_default_na=False)
+    data = pd.read_csv(csv_path, keep_default_na=False)
     if not enc_label:
         enc_label = preprocessing.LabelEncoder()
 
