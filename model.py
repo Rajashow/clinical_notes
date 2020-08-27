@@ -26,7 +26,7 @@ class EntityModel(nn.Module):
         self.out_tag = nn.Linear(768, self.num_tag)
 
     def forward(self, ids, mask, token_type_ids, target_tag):
-        o1, _ = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
+        _, o1 = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
         bo_tag = self.bert_drop_1(o1)
         tag = self.out_tag(bo_tag)
         loss_tag = loss_fn(tag, target_tag, mask, self.num_tag)

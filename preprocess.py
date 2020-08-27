@@ -7,22 +7,23 @@ import re
 from tqdm import tqdm
 import config
 from collections import deque
+from statistics import mode
 
 # %%
-OUTDIR = "processed/ner"
+OUTDIR = "processed/class"
 TRAIN_DIR = "new_bert/train"
 TEST_DIR = "new_bert/test"
 TAGS = set(
     [
-        "MEDICATION",
-        "DIABETES",
-        "OBESE",
+        # "MEDICATION",
+        # "DIABETES",
+        # "OBESE",
+        # "HYPERTENSION",
+        # "CAD",
+        # "PHI",
+        # "FAMILY_HIST",
+        # "HYPERLIPIDEMIA",
         "SMOKER",
-        "HYPERTENSION",
-        "CAD",
-        "PHI",
-        "FAMILY_HIST",
-        "HYPERLIPIDEMIA",
     ]
 )
 TEXT_TAG = "TEXT"
@@ -165,7 +166,15 @@ def is_end_of_sentence(split_txt, idx, curr_sentence_size):
     )
 
 
-def process_xml(i, file):
+def get_represtive_label(labels):
+    default_label = "O"
+    for label in labels:
+        if label != default_label:
+            return label
+    return default_label
+
+
+def process_xml_ner(i, file):
     """
     process_xml process a xml file to words and labels
 
@@ -273,6 +282,31 @@ def process_xml(i, file):
     return words, labels
 
 
+def process_xml_sent_tag(i, file):
+    """
+    process_xml process a xml file to words and labels
+
+
+
+    Parameters
+    ----------
+    i : int
+        file's index
+    file : file
+        file to process
+
+    Returns
+    -------
+    tuple
+        (words,labels)
+    """
+
+    words_list, labels_list = process_xml_ner(i, file)
+    sentences = [" ".join(words) for words in words_list]
+    sentences_classification = [get_represtive_label(labels) for labels in labels_list]
+    return sentences, sentences_classification
+
+
 def process_all_xml(folder=None, outdir="", out_modifer=""):
     """
     process_all_xml prcoess all xml 2 csv
@@ -294,19 +328,30 @@ def process_all_xml(folder=None, outdir="", out_modifer=""):
     label_set = set()
     with open(os.path.join(outdir, f"i2b2{out_modifer}.csv"), "w") as file:
         csv_file = csv.writer(file,)
-        csv_file.writerow(["filename", "sentence", "number", "word", "label"])
+        # csv_file.writerow(["filename", "sentence", "number", "word", "label"])
+        csv_file.writerow(["filename", "number", "sentence", "label"])
         for i, file in tqdm(
             enumerate(xmls), total=len(xmls), desc=f"Processing files from {folder}: "
         ):
-            lst_words, lst_labels = process_xml(i, file)
-            deque(map(lambda lbls: label_set.update(lbls), lst_labels))
+            sentences_list, label_list = process_xml_sent_tag(i, file)
+            if "SMOKER" not in "".join(label_list):
+                continue
             csv_file.writerows(
                 [
-                    (os.path.basename(file), i, j, word, label,)
-                    for i, (words, labels) in enumerate(zip(lst_words, lst_labels))
-                    for j, (word, label) in enumerate(zip(words, labels))
+                    (file, sentence_idx, sentence, label)
+                    for sentence_idx, (sentence, label) in enumerate(
+                        zip(sentences_list, label_list)
+                    )
                 ]
             )
+            # deque(map(lambda lbls: label_set.update(lbls), lst_labels))
+            # csv_file.writerows(
+            #     [
+            #         (os.path.basename(file), i, j, word, label,)
+            #         for i, (words, labels) in enumerate(zip(lst_words, lst_labels))
+            #         for j, (word, label) in enumerate(zip(words, labels))
+            #     ]
+            # )
     print(label_set)
     pass
 

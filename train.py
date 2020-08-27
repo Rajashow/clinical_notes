@@ -12,7 +12,7 @@ import config
 import dataset
 import engine
 from model import EntityModel
-from utils import process_data
+from utils import process_data_class
 import argparse
 
 
@@ -35,7 +35,7 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
     # loading data
-    (sentences, tag, enc_tag) = process_data(
+    (sentences, tag, enc_tag) = process_data_class(
         config.TRAINING_FILE, remove_idetincal_chained_values=args.SSWST
     )
 

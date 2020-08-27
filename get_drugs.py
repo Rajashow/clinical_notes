@@ -114,10 +114,11 @@ def extract_drug_info(i: int, file: str, vote: int = 2, med7_only: bool = True):
         return list(
             set(
                 (
-                    # e._.negex
-                    f"{e.text}&{True}"
+                    #
+                    f"{e.text}&{ e._.negex}"
                     for e in med7(clinical_note)
-                    if e.ent_type_ == drug_tag and re.sub(r"[^\w\s]", "", e.text)
+                    if e.ent_type_ == drug_tag
+                    and re.sub(r"[^\w\s]", "", e.text).strip()
                 )
             )
         )
@@ -126,7 +127,7 @@ def extract_drug_info(i: int, file: str, vote: int = 2, med7_only: bool = True):
 
 
 def get_row(arg, max_number: int = 0) -> tuple:
-    return (arg, *(None for _ in range(len(arg) - max_number)))
+    return (*arg, *(None for _ in range(len(arg) - max_number)))
 
 
 def process_all_xml(
@@ -165,11 +166,11 @@ def process_all_xml(
         ]
 
         max_numb_of_drugs = max((len(elem) - 1 for elem in drugs_by_file))
-        header = ["filename", *(f"durgs{i}" for i in range(1, max_numb_of_drugs + 1))]
+        header = ["filename", *(f"drug#{i}" for i in range(1, max_numb_of_drugs + 1))]
 
         csv_file.writerow(header)
         csv_file.writerows(
-            (get_row(elem, max_number=max_numb_of_drugs) for elem in drugs_by_file)
+            [get_row(elem, max_number=max_numb_of_drugs) for elem in drugs_by_file]
         )
 
         csv_file.writerows([])
@@ -181,3 +182,5 @@ OUTDIR = "processed/spacy"
 TRAIN_DIR = "new_bert/train"
 
 process_all_xml(TRAIN_DIR, outdir=OUTDIR, out_modifer="_drugs_train")
+
+# %%
