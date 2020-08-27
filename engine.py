@@ -143,12 +143,12 @@ def eval_fn_with_report(data_loader, model, device, labels):
         output = model(**data)
 
         train_loss = loss_fn(output, data["target_tag"])
-        train_acc = multi_acc(output, data["target_tag"])
+        # train_acc = multi_acc(output, data["target_tag"])
 
         train_epoch_loss += train_loss.item()
-        train_epoch_acc += train_acc.item()
+        # train_epoch_acc += train_acc.item()
 
-        y_pred_softmax = torch.log_softmax(y_pred, dim=1)
+        y_pred_softmax = torch.log_softmax(output, dim=1)
         _, y_pred_tags = torch.max(y_pred_softmax, dim=1)
 
         y_preds.extend(y_pred_tags.cpu().tolist())
