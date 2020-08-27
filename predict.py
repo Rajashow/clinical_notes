@@ -36,8 +36,7 @@ if __name__ == "__main__":
             data[k] = v.to(device).unsqueeze(0)
         tag, _ = model(**data)
 
-        print(
-            enc_tag.inverse_transform(tag.argmax(2).cpu().numpy().reshape(-1))[
-                1: len(tokenized_sentence)-1
-            ]
-        )
+        y_pred_softmax = torch.log_softmax(tag, dim=1)
+        _, y_pred_tags = torch.max(y_pred_softmax, dim=1)
+
+        print(enc_tag.inverse_transform(y_pred_tags.cpu()))

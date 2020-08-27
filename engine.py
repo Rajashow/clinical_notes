@@ -112,7 +112,7 @@ def eval_fn(data_loader, model, device):
     return train_epoch_loss / len(data_loader), train_epoch_acc / len(data_loader)
 
 
-def eval_fn_with_report(data_loader, model, device, labels):
+def eval_fn_with_report(data_loader, model, device, enc_tag):
     """
     eval_fn evaluate a model
 
@@ -155,12 +155,14 @@ def eval_fn_with_report(data_loader, model, device, labels):
         y_trues.extend(data["target_tag"].tolist())
 
     print("Classification Report:")
-    print(classification_report(y_trues, y_preds, labels=labels))
-    # cm = confusion_matrix(y_trues, y_preds, labels=labels)
-    # ax = plt.subplot()
-    # sns.heatmap(cm, annot=True, ax=ax, cmap="Blues", fmt="d")
-    # ax.set_title("Confusion Matrix")
-    # ax.set_xlabel("Predicted Labels")
-    # ax.set_ylabel("True Labels")
+    print(classification_report(y_trues, y_preds, target_names=list(enc_tag.classes_)))
+    y_preds = enc_tag.inverse_transform(y_preds)
+    y_trues = enc_tag.inverse_transform(y_trues)
+    cm = confusion_matrix(y_trues, y_preds,)
+    ax = plt.subplot()
+    sns.heatmap(cm, annot=True, ax=ax, cmap="Blues", fmt="d")
+    ax.set_title("Confusion Matrix")
+    ax.set_xlabel("Predicted Labels")
+    ax.set_ylabel("True Labels")
 
     return train_epoch_loss / len(data_loader), train_epoch_acc / len(data_loader)

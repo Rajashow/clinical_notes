@@ -114,5 +114,5 @@ if __name__ == "__main__":
             torch.save(model.state_dict(), config.MODEL_PATH)
             best_loss = test_loss
 
-    engine.eval_fn_with_report(test_data_loader, model, device,list(enc_tag.classes_))
+    engine.eval_fn_with_report(test_data_loader, model, device, enc_tag)
     print(f"best loss =  {best_loss}")
