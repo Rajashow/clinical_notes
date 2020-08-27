@@ -156,11 +156,11 @@ def eval_fn_with_report(data_loader, model, device, labels):
 
     print("Classification Report:")
     print(classification_report(y_trues, y_preds, labels=labels))
-    cm = confusion_matrix(y_trues, y_preds, labels=labels)
-    ax = plt.subplot()
-    sns.heatmap(cm, annot=True, ax=ax, cmap="Blues", fmt="d")
-    ax.set_title("Confusion Matrix")
-    ax.set_xlabel("Predicted Labels")
-    ax.set_ylabel("True Labels")
+    # cm = confusion_matrix(y_trues, y_preds, labels=labels)
+    # ax = plt.subplot()
+    # sns.heatmap(cm, annot=True, ax=ax, cmap="Blues", fmt="d")
+    # ax.set_title("Confusion Matrix")
+    # ax.set_xlabel("Predicted Labels")
+    # ax.set_ylabel("True Labels")
 
     return train_epoch_loss / len(data_loader), train_epoch_acc / len(data_loader)
