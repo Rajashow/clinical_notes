@@ -1,5 +1,29 @@
 import torch
+import numpy as np
 from tqdm import tqdm
+
+
+def loss_fn(y_pred, y_true):
+
+    lfn = torch.nn.CrossEntropyLoss()
+    loss = lfn(y_pred, y_true)
+    return loss
+
+
+def multi_acc(y_pred, y_true):
+    y_pred_softmax = torch.log_softmax(y_pred, dim=1)
+    _, y_pred_tags = torch.max(y_pred_softmax, dim=1)
+
+    correct_pred = (y_pred_tags == y_true).float()
+    acc = correct_pred.sum() / len(correct_pred)
+
+    acc = torch.round(acc) * 100
+
+    return acc
+
+
+def get_one_hot(targets, device, n_labels):
+    return (torch.eye(n_labels)[targets]).to(device)
 
 
 def train_fn(data_loader, model, optimizer, device, scheduler):
@@ -27,17 +51,25 @@ def train_fn(data_loader, model, optimizer, device, scheduler):
         final loss
     """
     model.train()
-    final_loss = 0
+    train_epoch_loss = 0
+    train_epoch_acc = 0
     for data in tqdm(data_loader, total=len(data_loader)):
         for k, v in data.items():
             data[k] = v.to(device)
         optimizer.zero_grad()
-        _, loss = model(**data)
-        loss.backward()
+        output = model(**data)
+
+        train_loss = loss_fn(output, data["target_tag"])
+        train_acc = multi_acc(output, data["target_tag"])
+
+        train_loss.backward()
         optimizer.step()
         scheduler.step()
-        final_loss += loss.item()
-    return final_loss / len(data_loader)
+
+        train_epoch_loss += train_loss.item()
+        train_epoch_acc += train_acc.item()
+
+    return train_epoch_loss / len(data_loader), train_epoch_acc / len(data_loader)
 
 
 def eval_fn(data_loader, model, device):
@@ -61,10 +93,17 @@ def eval_fn(data_loader, model, device):
         final loss
     """
     model.eval()
-    final_loss = 0
+    train_epoch_loss = 0
+    train_epoch_acc = 0
     for data in tqdm(data_loader, total=len(data_loader)):
         for k, v in data.items():
             data[k] = v.to(device)
-        _, loss = model(**data)
-        final_loss += loss.item()
-    return final_loss / len(data_loader)
+        output = model(**data)
+
+        train_loss = loss_fn(output, data["target_tag"])
+        train_acc = multi_acc(output, data["target_tag"])
+
+        train_epoch_loss += train_loss.item()
+        train_epoch_acc += train_acc.item()
+
+    return train_epoch_loss / len(data_loader), train_epoch_acc / len(data_loader)

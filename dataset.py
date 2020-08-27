@@ -1,6 +1,11 @@
 from typing import Counter
 import config
 import torch
+import numpy as np
+
+
+def get_one_hot(targets, n_labels):
+    return torch.from_numpy(np.eye(n_labels)[targets])
 
 
 class EntityDataset:
@@ -16,37 +21,25 @@ class EntityDataset:
 
     def __getitem__(self, item):
         text = self.texts[item]
-        tags = self.tags[item]
-
-        ids = []
-        target_tag = []
+        target_tag = self.tags[item]
 
         # text -> bert tokens
-        for i, s in enumerate(text):
-            inputs = config.TOKENIZER.encode(s, add_special_tokens=False)
-            input_len = len(inputs)
-            ids.extend(inputs)
-            target_tag.extend([tags[i]] * input_len)
-        ids = ids[: config.MAX_LEN - 2]
-        if self._verbose and len(ids) > config.MAX_LEN:
-            print(len(ids))
+        inputs = config.TOKENIZER.encode_plus(
+            text,
+            None,
+            add_special_tokens=True,
+            max_length=config.MAX_LEN,
+            truncation=True,
+        )
 
-        #  add [start] and [end] tokens
-        target_tag = target_tag[: config.MAX_LEN - 2]
-
-        ids = [101] + ids + [102]
-        target_tag = [0] + target_tag + [0]
-
-        # create mask and taken types
-        mask = [1] * len(ids)
-        token_type_ids = [0] * len(ids)
-
-        padding_len = config.MAX_LEN - len(ids)
+        ids = inputs["input_ids"]
+        mask = inputs["attention_mask"]
+        token_type_ids = inputs["token_type_ids"]
         # pad the seq to max len
+        padding_len = config.MAX_LEN - len(ids)
         ids = ids + ([0] * padding_len)
         mask = mask + ([0] * padding_len)
         token_type_ids = token_type_ids + ([0] * padding_len)
-        target_tag = target_tag + ([0] * padding_len)
 
         return {
             "ids": torch.tensor(ids, dtype=torch.long),

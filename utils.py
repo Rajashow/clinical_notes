@@ -2,7 +2,7 @@ from sklearn import preprocessing
 import pandas as pd
 
 
-def process_data_class(csv_path, enc_label=None, remove_idetincal_chained_values=False):
+def process_data_ner(csv_path, enc_label=None, remove_idetincal_chained_values=False):
     """
     process_data return process data
 

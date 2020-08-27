@@ -35,9 +35,7 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
     # loading data
-    (sentences, tag, enc_tag) = process_data_class(
-        config.TRAINING_FILE, remove_idetincal_chained_values=args.SSWST
-    )
+    (sentences, tag, enc_tag) = process_data_class(config.TRAINING_FILE,)
 
     # saving encoder
     meta_data = {
@@ -100,12 +98,13 @@ if __name__ == "__main__":
     best_loss = np.inf
     for epoch in range(config.EPOCHS):
         # train loop
-        train_loss = engine.train_fn(
+        train_loss, train_acc = engine.train_fn(
             train_data_loader, model, optimizer, device, scheduler
         )
         # validation loop
-        test_loss = engine.eval_fn(valid_data_loader, model, device)
+        test_loss, test_acc = engine.eval_fn(valid_data_loader, model, device)
         print(f"Train Loss = {train_loss} Valid Loss = {test_loss}")
+        print(f"Train acc = {train_acc} Valid acc = {test_acc}")
         if test_loss < best_loss:
             torch.save(model.state_dict(), config.MODEL_PATH)
             best_loss = test_loss
