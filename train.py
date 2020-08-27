@@ -36,6 +36,7 @@ if __name__ == "__main__":
     args = get_args()
     # loading data
     (sentences, tag, enc_tag) = process_data_class(config.TRAINING_FILE,)
+    (tsentences, ttag, _) = process_data_class(config.TESTING_FILE, enc_label=enc_tag)
 
     # saving encoder
     meta_data = {
@@ -64,6 +65,10 @@ if __name__ == "__main__":
         valid_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=1
     )
 
+    test_dataset = dataset.EntityDataset(texts=tsentences, tags=ttag)
+    test_data_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=4
+    )
     # load model
     device = torch.device("cuda")
     model = EntityModel(num_tag=num_tag)
@@ -109,4 +114,5 @@ if __name__ == "__main__":
             torch.save(model.state_dict(), config.MODEL_PATH)
             best_loss = test_loss
 
+    engine.eval_fn_with_report(test_data_loader, model, device,list(enc_tag.classes_))
     print(f"best loss =  {best_loss}")
