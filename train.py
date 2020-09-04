@@ -35,6 +35,7 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
     # loading data
+
     (sentences, tag, enc_tag) = process_data_class(config.TRAINING_FILE,)
     (tsentences, ttag, _) = process_data_class(config.TESTING_FILE, enc_label=enc_tag)
 
@@ -53,6 +54,7 @@ if __name__ == "__main__":
         test_tag,
     ) = model_selection.train_test_split(sentences, tag, random_state=42, test_size=0.1)
     # creating datasets and data loaders
+
     train_dataset = dataset.EntityDataset(texts=train_sentences, tags=train_tag)
 
     train_data_loader = torch.utils.data.DataLoader(

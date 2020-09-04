@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 
 def loss_fn(y_pred, y_true):
-
     lfn = torch.nn.CrossEntropyLoss()
     loss = lfn(y_pred, y_true.flatten())
     return loss
